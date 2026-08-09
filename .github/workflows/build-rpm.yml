@@ -6,11 +6,6 @@ on:
     paths:
       - 'materialgram.spec'
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'materialgram version (e.g. 7.0.5.1)'
-        required: false
-        default: ''
 
 jobs:
   build:
@@ -21,8 +16,7 @@ jobs:
     steps:
       - name: Install build deps
         run: |
-          dnf install -y mock rpkg rpm-build wget curl git jq
-          echo "fedora" > /etc/hostname
+          dnf install -y mock rpm-build wget curl git jq rpkg
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,7 +26,6 @@ jobs:
         run: |
           VERSION=$(grep '^Version:' materialgram.spec | awk '{print $2}')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Building materialgram $VERSION"
 
       - name: Download source tarball
         run: |
@@ -42,6 +35,9 @@ jobs:
 
       - name: Build SRPM
         run: |
+          mkdir -p /tmp/srpm
+          cp materialgram.spec /tmp/srpm/
+          cd /tmp/srpm
           rpkg srpm --outdir /tmp/srpm
           ls -lh /tmp/srpm/*.src.rpm
 
@@ -57,13 +53,9 @@ jobs:
           path: /tmp/rpm-result/*.x86_64.rpm
 
       - name: Create release
-        if: github.event_name == 'workflow_dispatch'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION=${{ steps.ver.outputs.version }}
           TAG="v${VERSION}"
-          gh release create "$TAG" /tmp/rpm-result/*.x86_64.rpm \
-            --repo ${{ github.repository }} \
-            --title "materialgram v${VERSION}" \
-            --notes "Automated RPM build for v${VERSION}" || true
+          gh release create "$TAG" /tmp/rpm-result/*.x86_64.rpm             --repo ${{ github.repository }}             --title "materialgram v${VERSION}"             --notes "Automated RPM build for v${VERSION}" || true
