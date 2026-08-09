@@ -1,0 +1,69 @@
+name: Build RPM
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'materialgram.spec'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'materialgram version (e.g. 7.0.5.1)'
+        required: false
+        default: ''
+
+jobs:
+  build:
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: fedora:43
+      options: --privileged
+    steps:
+      - name: Install build deps
+        run: |
+          dnf install -y mock rpkg rpm-build wget curl git jq
+          echo "fedora" > /etc/hostname
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read version from spec
+        id: ver
+        run: |
+          VERSION=$(grep '^Version:' materialgram.spec | awk '{print $2}')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building materialgram $VERSION"
+
+      - name: Download source tarball
+        run: |
+          VERSION=${{ steps.ver.outputs.version }}
+          wget -q "https://github.com/kukuruzka165/materialgram/releases/download/v${VERSION}/materialgram-v${VERSION}.tar.zst"
+          ls -lh materialgram-v${VERSION}.tar.zst
+
+      - name: Build SRPM
+        run: |
+          rpkg srpm --outdir /tmp/srpm
+          ls -lh /tmp/srpm/*.src.rpm
+
+      - name: Build RPM with mock
+        run: |
+          mock -r fedora-43-x86_64 --rebuild /tmp/srpm/*.src.rpm --resultdir /tmp/rpm-result
+          ls -lh /tmp/rpm-result/*.x86_64.rpm
+
+      - name: Upload RPM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: materialgram-rpm
+          path: /tmp/rpm-result/*.x86_64.rpm
+
+      - name: Create release
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=${{ steps.ver.outputs.version }}
+          TAG="v${VERSION}"
+          gh release create "$TAG" /tmp/rpm-result/*.x86_64.rpm \
+            --repo ${{ github.repository }} \
+            --title "materialgram v${VERSION}" \
+            --notes "Automated RPM build for v${VERSION}" || true
