@@ -7,7 +7,7 @@ Group:          Applications/Internet
 Packager:       Burhanverse  <contact@burhanverse.eu.org>
 License:        GPLv3
 URL:            https://github.com/kukuruzka165/materialgram
-Source0:        https://github.com/kukuruzka165/materialgram/releases/download/v%{version}/materialgram-v%{version}.tar.gz
+Source0:        https://github.com/kukuruzka165/materialgram/releases/download/v%{version}/materialgram-v%{version}.tar.zst
 
 %description
 Telegram Desktop fork with Material Design and other improvements, which is based on the Telegram API and the MTProto secure protocol.
@@ -22,7 +22,7 @@ Requires: desktop-file-utils
 Requires: shared-mime-info
 
 %prep
-tar -xvf %{_sourcedir}/materialgram-v%{version}.tar.gz -C %{_sourcedir}
+tar -xvf %{_sourcedir}/materialgram-v%{version}.tar.zst -C %{_sourcedir}
 cd %{_sourcedir}/
 
 %build
