@@ -15,7 +15,7 @@ jobs:
       options: --privileged
     steps:
       - name: Install build deps
-        run: dnf install -y mock rpm-build wget curl git jq rpkg
+        run: dnf install -y mock rpm-build wget curl git jq rpkg gh
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -54,4 +54,7 @@ jobs:
           gh release create "$TAG" /tmp/rpm-result/*.x86_64.rpm \
             --repo ${{ github.repository }} \
             --title "materialgram v${VERSION}" \
-            --notes "Automated RPM build for v${VERSION}" || true
+            --notes "Automated RPM build for v${VERSION}" \
+            --generate-notes || \
+          gh release upload "$TAG" /tmp/rpm-result/*.x86_64.rpm \
+            --repo ${{ github.repository }} --clobber
