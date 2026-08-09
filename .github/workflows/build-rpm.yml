@@ -15,8 +15,7 @@ jobs:
       options: --privileged
     steps:
       - name: Install build deps
-        run: |
-          dnf install -y mock rpm-build wget curl git jq rpkg
+        run: dnf install -y mock rpm-build wget curl git jq rpkg
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,23 +26,17 @@ jobs:
           VERSION=$(grep '^Version:' materialgram.spec | awk '{print $2}')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Download source tarball
+      - name: Build SRPM
         run: |
           VERSION=${{ steps.ver.outputs.version }}
           wget -q "https://github.com/kukuruzka165/materialgram/releases/download/v${VERSION}/materialgram-v${VERSION}.tar.zst"
           ls -lh materialgram-v${VERSION}.tar.zst
-
-      - name: Build SRPM
-        run: |
-          mkdir -p /tmp/srpm
-          cp materialgram.spec /tmp/srpm/
-          cd /tmp/srpm
-          rpkg srpm --outdir /tmp/srpm
-          ls -lh /tmp/srpm/*.src.rpm
+          rpkg srpm --outdir $PWD
+          ls -lh *.src.rpm
 
       - name: Build RPM with mock
         run: |
-          mock -r fedora-43-x86_64 --rebuild /tmp/srpm/*.src.rpm --resultdir /tmp/rpm-result
+          mock -r fedora-43-x86_64 --rebuild *.src.rpm --resultdir /tmp/rpm-result
           ls -lh /tmp/rpm-result/*.x86_64.rpm
 
       - name: Upload RPM artifact
@@ -58,4 +51,7 @@ jobs:
         run: |
           VERSION=${{ steps.ver.outputs.version }}
           TAG="v${VERSION}"
-          gh release create "$TAG" /tmp/rpm-result/*.x86_64.rpm             --repo ${{ github.repository }}             --title "materialgram v${VERSION}"             --notes "Automated RPM build for v${VERSION}" || true
+          gh release create "$TAG" /tmp/rpm-result/*.x86_64.rpm \
+            --repo ${{ github.repository }} \
+            --title "materialgram v${VERSION}" \
+            --notes "Automated RPM build for v${VERSION}" || true
