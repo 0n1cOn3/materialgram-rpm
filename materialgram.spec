@@ -1,84 +1,55 @@
+# Repackaged upstream binary: no debuginfo, don't strip
+%global debug_package %{nil}
+%global __strip /bin/true
+%global appid io.github.kukuruzka165.materialgram
+
 Name:           materialgram
 Version:        7.3.1.1
-Release:        2%{?dist}
+Release:        1%{?dist}
 Summary:        Telegram Desktop fork with material icons and some improvements
-Vendor:         burhancodes
-Group:          Applications/Internet
-Packager:       Stefan Kuny(0n1cOn3)  <0n1cOn3@gmx.ch>
-License:        GPLv3
+License:        GPL-3.0-only
 URL:            https://github.com/kukuruzka165/materialgram
-Source0:        https://github.com/kukuruzka165/materialgram/releases/download/v%{version}/materialgram-v%{version}.tar.gz
+Source0:        %{url}/releases/download/v%{version}/%{name}-v%{version}.tar.zst
+
+ExclusiveArch:  x86_64
+
+BuildRequires:  zstd
+BuildRequires:  desktop-file-utils
+
+Requires:       hicolor-icon-theme
 
 %description
-Telegram Desktop fork with Material Design and other improvements, which is based on the Telegram API and the MTProto secure protocol.
-
-Author: kukuruzka  <kukuruzka165@github.com>
-
-BuildRequires: tar
-BuildRequires: sed
-
-Requires: hicolor-icon-theme
-Requires: desktop-file-utils
-Requires: shared-mime-info
+Telegram Desktop fork with Material Design and other improvements,
+based on the Telegram API and the MTProto secure protocol.
 
 %prep
-tar -xvf %{_sourcedir}/materialgram-v%{version}.tar.gz -C %{_sourcedir}
-cd %{_sourcedir}/
+%setup -q -c -n %{name}-v%{version}
 
 %build
+# prebuilt upstream binary, nothing to build
 
 %install
-mkdir -p %{buildroot}/usr/bin
-mkdir -p %{buildroot}/usr/share/applications
-mkdir -p %{buildroot}/usr/share/dbus-1
-mkdir -p %{buildroot}/usr/share/icons
-mkdir -p %{buildroot}/usr/share/metainfo
+install -Dpm 0755 usr/bin/%{name} %{buildroot}%{_bindir}/%{name}
+mkdir -p %{buildroot}%{_datadir}
+cp -a usr/share/applications usr/share/dbus-1 usr/share/icons usr/share/metainfo \
+      %{buildroot}%{_datadir}/
 
-cp -a %{_sourcedir}/usr/bin/materialgram %{buildroot}/usr/bin/
-
-cp -a %{_sourcedir}/usr/share/* %{buildroot}/usr/share/
-
-chmod +x %{buildroot}/usr/bin/materialgram
+%check
+desktop-file-validate %{buildroot}%{_datadir}/applications/%{appid}.desktop
 
 %files
-/usr/bin/materialgram
-%dir /usr/share/applications
-/usr/share/applications/*
-%dir /usr/share/dbus-1
-/usr/share/dbus-1/*
-%dir /usr/share/icons
-/usr/share/icons/*
-%dir /usr/share/metainfo
-/usr/share/metainfo/*
-
-%post
-/bin/touch --no-create %{_datadir}/icons/hicolor &>/dev/null || :
-/usr/bin/update-desktop-database &> /dev/null || :
-
-%postun
-/bin/touch --no-create %{_datadir}/icons/hicolor &>/dev/null || :
-if [ $1 -eq 0 ] ; then
-    /bin/touch --no-create %{_datadir}/icons/hicolor &>/dev/null
-    /usr/bin/gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
-fi
-/usr/bin/update-desktop-database &> /dev/null || :
-
-if [ "$1" -eq 0 ]; then
-  pkill -f materialgram || true
-  
-  USER_HOME="/home/${SUDO_USER:-$USER}"
-
-  if [ -d "$USER_HOME/.local/share/materialgram" ]; then
-    rm -rf "$USER_HOME/.local/share/materialgram"
-  fi
-fi
-
-%posttrans
-/usr/bin/gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
+%{_bindir}/%{name}
+%{_datadir}/applications/%{appid}.desktop
+%{_datadir}/dbus-1/services/%{appid}.service
+%{_datadir}/icons/hicolor/*/apps/%{appid}*
+%{_datadir}/metainfo/%{appid}.metainfo.xml
 
 %changelog
-* Sat Nov 16 2026 0n1cOn3 <0n1cOn3@gmx.ch> - 7.0.5.1-1
+* Mon Nov 16 2026 0n1cOn3 <0n1cOn3@gmx.ch> - 7.3.1.1-1
 - Updated to version 7.3.1.1
+- Switch Source0 to upstream .tar.zst
+- Fix deps being swallowed by %%description, drop obsolete scriptlets
+- Remove %%postun that killed processes and deleted user data
 * Sat Oct 17 2026 Burhanverse <contact@burhanverse.eu.org> - 7.0.5.1-1
 - Updated to version 7.0.5.1
 * Sat Jul 25 2026 Burhanverse <contact@burhanverse.eu.org> - 6.7.7.1-1
