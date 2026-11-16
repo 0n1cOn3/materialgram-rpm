@@ -4,10 +4,10 @@ Release:        2%{?dist}
 Summary:        Telegram Desktop fork with material icons and some improvements
 Vendor:         burhancodes
 Group:          Applications/Internet
-Packager:       Burhanverse  <contact@burhanverse.eu.org>
+Packager:       Stefan Kuny(0n1cOn3)  <0n1cOn3@gmx.ch>
 License:        GPLv3
 URL:            https://github.com/kukuruzka165/materialgram
-Source0:        https://github.com/kukuruzka165/materialgram/releases/download/v%{version}/materialgram-v%{version}.tar.zst
+Source0:        https://github.com/kukuruzka165/materialgram/releases/download/v%{version}/materialgram-v%{version}.tar.gz
 
 %description
 Telegram Desktop fork with Material Design and other improvements, which is based on the Telegram API and the MTProto secure protocol.
@@ -22,7 +22,7 @@ Requires: desktop-file-utils
 Requires: shared-mime-info
 
 %prep
-tar -xvf %{_sourcedir}/materialgram-v%{version}.tar.zst -C %{_sourcedir}
+tar -xvf %{_sourcedir}/materialgram-v%{version}.tar.gz -C %{_sourcedir}
 cd %{_sourcedir}/
 
 %build
@@ -77,7 +77,7 @@ fi
 /usr/bin/gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 %changelog
-* Sun Aug 09 2026 0n1cOn3 <0n1cOn3@gmx.ch> - 7.0.5.1-1
+* Sat Oct 17 2026 Burhanverse <contact@burhanverse.eu.org> - 7.0.5.1-1
 - Updated to version 7.0.5.1
 * Sat Jul 25 2026 Burhanverse <contact@burhanverse.eu.org> - 6.7.7.1-1
 - Updated to version 6.7.7.1
